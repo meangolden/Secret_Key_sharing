@@ -25,4 +25,5 @@ def encrypt(key,channel_seq, block_size=3):
         
     stretch_key =  np.repeat(key, block_size) # stretches the length of the \
         # key to facilitate encyption by XoRing.     
+        
     return [z[0]^z[1] for z in zip(stretch_key, channel_seq)] 
