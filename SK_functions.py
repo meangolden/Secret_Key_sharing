@@ -86,9 +86,5 @@ def decrypt(channel_seq_bob, ciphertext,threshold ,block_size=3):
         else:
             bits2drop.append(i)    
             estimate_key[i] = 3 # "3" indicates uncertainty about the key. 
-                                #This keybit will be dropped after the loop.
-    #estimate_key = estimate_key.remove(3) # remove all "3"s from the estimated_key. 
-    return estimate_key, hamming_weights, xor_seq_grouped,bits2drop
-    
-        
-   
+                                #This keybit will be dropped after the loop. 
+    return list(estimate_key), bits2drop
