@@ -57,32 +57,41 @@ def decrypt(channel_seq_bob, ciphertext, threshold, block_size=3):
                 threshold:   the decision threshold(s) for hamming weights. It
                              comprises one or two integers (t1,t2).
                 block_size:   determines the size of the blocks that the 
-                channel_seq_bob is grouped into for encryption. This must match\
+                channel_seq_bob is grouped into for encryption. This must match
                 the block-size used by Alice.
         Outputs: estimate_key: Bob's estimation of the key
                  bits2drop: there were some keybits that Bob was unsure about 
                  whether they were 0 or 1.  "bits2drop" is a list that indicates
                  the places of these list. Bob keeps this list for Alice: she needs
-                 to know which bits to drop from the original key sequence'''     
-    assert isBinary(ciphertext) == True , "2nd argument must be binary"
-    assert isBinary(channel_seq_bob) == True , "1st argument must be binary"
-    assert len(ciphertext) % block_size == 0, "Check that the first input is \
+                 needs to know which bits to drop from the original key sequence
+                 '''     
+    assert isBinary(ciphertext) == True, \
+    "2nd argument must be binary"
+    assert isBinary(channel_seq_bob) == True, \
+    "1st argument must be binary"
+    assert len(ciphertext) % block_size == 0,\
+    "Check that the first input is \
      the output of encrypt().Check that the block_size was the same in encrypt()."
-    assert type(block_size) == int, "the second argument must be an integer"
-    assert type(threshold) == int or len(threshold) == 2, "theshold must be an \
-    integer or a list of two integers."
+    assert type(block_size) == int, \
+    "the second argument must be an integer"
+    assert (type(threshold) == int) or (len(threshold) == 2), \
+    "theshold must be an integer or a list of two integers."
     
-    global hamming_weights, xor_seq_grouped,xor_seq
-    xor_seq = [s1^s2 for s1,s2 in zip(channel_seq_bob,ciphertext)]
-    k = int(len(ciphertext) / block_size) # the length of the key
+    
+    # the length of the key
+    k = int(len(ciphertext) / block_size)
+    #XoR the two seqeunces and group them in blocks    
+    xor_seq = [s1^s2 for s1,s2 in zip(channel_seq_bob,ciphertext)]   
     xor_seq_grouped = np.array(xor_seq).reshape(k,block_size)
-  
+    #find the hamming weight of each group
     hamming_weights = sum(xor_seq_grouped.T)
-    #assert len(hamming_weights) == k
-    estimate_key = np.ones(k) # initialise the key estimate
-    bits2drop = [] # initiliase list that indicates the places for which Bob 
-    #cannot make a decision about the keybit. The bits of these places will be 
-    # dropped for the final key.
+    # initialise the key estimate
+    estimate_key = np.ones(k)
+    # initiliase list that indicates the places for which Bob cannot make a
+    # decision about the keybit. The bits of these places will be dropped for
+    # the final key.
+    bits2drop = []
+    
     if type(threshold)== int:
         t1, t2 = threshold, threshold + 1
     else:
