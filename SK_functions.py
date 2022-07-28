@@ -5,10 +5,10 @@ Created on Mon Jul 25 10:23:42 2022
 @author: cp17593
 """
 import numpy as np
-from random import randint
+from random import randint, sample
 
 def isBinary(my_list):
-    ''' Checks if a list (or tuple) is binary. Returns True or False.
+    ''' Checks if a list (or tuple) is binary (0s and 1s). Returns True or False.
     '''
     return set(my_list) == {0,1}
 
@@ -20,11 +20,16 @@ def keyAlice(length):
     assert type(length) == int and (length > 0), \
         "Argument must be a positive integer"
         
-    return [randint(0, 1) for i in range(length)]
+    return [randint(0, 1) for _ in range(length)]
     
 
 def encrypt(key_alice,channel_seq_alice, block_size=3):
-    ''' ADD ONE LINE DESCRIPTION
+    ''' Alices encrypts her secret key by utilising her channel sequence.
+    The channel sequence is grouped in groups of 'blovk_size'. Alice generates
+    a new sequence by flipping or not each group. Every time the key bit is 1, 
+    the corresponing group of bits will be flipped. If the key bit is 0, the 
+    corresponding group will not be passed on the new sequence unaltered.
+    
     Inputs: key_alice: the binary session key created by Alice's PRNG 'keyAlice()'
         channel_seq_alice:  the binary channel sequence at Alice
             block_size:   determines the size of the blocks that the 
@@ -33,10 +38,10 @@ def encrypt(key_alice,channel_seq_alice, block_size=3):
     '''
     assert isBinary(key_alice) == True , "Key must be binary"
     assert isBinary(channel_seq_alice) == True , "Sequence must be binary"
-    assert len(key_alice)*block_size <= len(channel_seq_alice) , "The channel sequence is \
+    assert len(key_alice)*block_size <= len(channel_seq_alice) , "Channel sequence is \
         not long enough. Inrease the length of the channel sequence, or reduce\
         the blocksize and/or the keysize."
-    assert type(block_size) == int, "the second argument must be an integer"
+    assert type(block_size) == int, "Second argument must be an integer"
     
     # stretches the length of the key to facilitate encyption by XoRing. 
     stretch_key =  np.repeat(key_alice, block_size)  
@@ -44,8 +49,10 @@ def encrypt(key_alice,channel_seq_alice, block_size=3):
     return [z[0]^z[1] for z in zip(stretch_key, channel_seq_alice)] 
 
 
-def decrypt(channel_seq_bob, ciphertext,threshold ,block_size=3):
-    ''' Inputs: channel_seq_bob:  the binary channel sequence at Bob
+def decrypt(channel_seq_bob, ciphertext, threshold, block_size=3):
+    '''Bob decrypts the cipher sent by Alice in order to retrieve the secret key. 
+    
+        Inputs: channel_seq_bob:  the binary channel sequence at Bob
                 ciphertext:  the encrypted sequence sent by Alice
                 threshold:   the decision threshold(s) for hamming weights. It
                              comprises one or two integers (t1,t2).
@@ -92,5 +99,28 @@ def decrypt(channel_seq_bob, ciphertext,threshold ,block_size=3):
         else:
             bits2drop.append(i)    
             estimate_key[i] = 3 # "3" indicates uncertainty about the key. 
-                                #This keybit will be dropped after the loop. 
-    return list(estimate_key), bits2drop
+                                #This keybit will be dropped after the loop ends. 
+    return [int(i) for i in estimate_key], bits2drop
+
+def genCorrSeq(length, mismatches_dec):
+    '''Generates two binary sequences with a number of mismatches. 
+    The positions of the mismathces are generates randomly.
+    1st arg: the lenght of each sequence
+    2nd arg: the percentage of mismatches between the two sequences. Write in decimal
+    Output: Two binary sequences that agree in all but "no_mismatches" bits, 
+    where "no_mismatches"  is the second argument.
+    '''
+    assert (mismatches_dec <= 1) and (mismatches_dec >= 0), \
+    "mismatches_dec needs to be a decimal between 0 and 1"
+    no_mismatches = int(np.round(mismatches_dec * length))
+    # generate Alice's sequence 
+    seq_alice = [randint(0, 1) for _ in range(length)]
+    # initiate Bob's sequence
+    seq_bob = seq_alice
+    # pick places for the mismatches
+    random_indices = sample(range(length), no_mismatches)
+    # flip the bits at the previously selected positions.
+    for indx in random_indices:
+        seq_bob[indx] = seq_bob[indx]^1
+        
+    return seq_alice, seq_bob
