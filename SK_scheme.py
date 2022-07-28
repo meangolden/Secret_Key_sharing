@@ -3,15 +3,15 @@
 """Copyright Chrysanthi Pascou, University of Bristol, 2022
 Licence
 
-Description 
-   
+Description: Alice wishes to share a secret key with Bob by communicating 
+through a public channel. Alice and Bob share two correlated binary sequences.
+Alice uses the correlated to Bob's sequence to 'hide' the secret key. For more
+details: https://www.overleaf.com/read/dgsmpwkcxkfq
+
 Created on Wed Jul 27 14:48:35 2022
 
 @author: cp17593
 """
-#import sys
-#sys.modules[__name__].__dict__.clear()
-
 # Libraries ###################################################################
 from SK_functions import encrypt, decrypt, keyAlice, genCorrSeq
 
