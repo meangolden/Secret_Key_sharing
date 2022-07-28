@@ -10,7 +10,7 @@ from random import randint, sample
 def isBinary(my_list):
     ''' Checks if a list (or tuple) is binary (0s and 1s). Returns True or False.
     '''
-    return set(my_list) == {0,1}
+    return (set(my_list) == {0,1}) or (set(my_list) == {0}) or (set(my_list) == {1}) 
 
 
 def keyAlice(length):
@@ -116,11 +116,11 @@ def genCorrSeq(length, mismatches_dec):
     # generate Alice's sequence 
     seq_alice = [randint(0, 1) for _ in range(length)]
     # initiate Bob's sequence
-    seq_bob = seq_alice
+    seq_bob = [i for i in seq_alice] # "seq_bob = seq_alice" did not work for some reason 
     # pick places for the mismatches
     random_indices = sample(range(length), no_mismatches)
     # flip the bits at the previously selected positions.
     for indx in random_indices:
-        seq_bob[indx] = seq_bob[indx]^1
-        
+        seq_bob[indx] = int(seq_bob[indx]^1)
+
     return seq_alice, seq_bob
