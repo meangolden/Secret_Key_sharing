@@ -1,39 +1,45 @@
 # -*- coding: utf-8 -*-
 """
 Created on Mon Jul 25 10:23:42 2022
-
+['A' for _ in range(5)]
 @author: cp17593
 """
 import numpy as np
 from random import randint
 
 def isBinary(my_list):
-    ''' Checks if a list (or tuple) is binary. Returns True or False.'''
+    ''' Checks if a list (or tuple) is binary. Returns True or False.
+    '''
     return set(my_list) == {0,1}
 
 
 def keyAlice(length):
-    "Generates a list of size 'length' with random binary inputs. This is the \
-    secret (session) key generated at ALice."
-    assert type(length) == int and length>0, "Argument must be a positive integer"
-    return [randint(0,1) for i in range(length)]
+    '''Generates a list of size 'length' with random binary inputs. This is the
+    secret (session) key generated at ALice.
+    '''
+    assert type(length) == int and (length > 0), \
+        "Argument must be a positive integer"
+        
+    return [randint(0, 1) for i in range(length)]
     
 
 def encrypt(key_alice,channel_seq_alice, block_size=3):
-    ''' Inputs: key_alice: the binary session key created by Alice's PRNG 'keyAlice()'
-                channel_seq_alice:  the binary channel sequence at Alice
-                block_size:   determines the size of the blocks that the 
+    ''' ADD ONE LINE DESCRIPTION
+    Inputs: key_alice: the binary session key created by Alice's PRNG 'keyAlice()'
+        channel_seq_alice:  the binary channel sequence at Alice
+            block_size:   determines the size of the blocks that the 
                 channel_seq is grouped into for encryption
-        Output: returns the ciphertext with size block_size*key'''
-        
+    Output: returns the ciphertext with size block_size*key
+    '''
     assert isBinary(key_alice) == True , "Key must be binary"
     assert isBinary(channel_seq_alice) == True , "Sequence must be binary"
     assert len(key_alice)*block_size <= len(channel_seq_alice) , "The channel sequence is \
         not long enough. Inrease the length of the channel sequence, or reduce\
         the blocksize and/or the keysize."
     assert type(block_size) == int, "the second argument must be an integer"
-    stretch_key =  np.repeat(key_alice, block_size) # stretches the length of the \
-        # key to facilitate encyption by XoRing.     
+    
+    # stretches the length of the key to facilitate encyption by XoRing. 
+    stretch_key =  np.repeat(key_alice, block_size)  
         
     return [z[0]^z[1] for z in zip(stretch_key, channel_seq_alice)] 
 
