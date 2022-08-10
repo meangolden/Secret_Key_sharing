@@ -25,7 +25,7 @@ def keyAlice(length):
 
 def encrypt(key_alice,channel_seq_alice, block_size=3):
     ''' Alices encrypts her secret key by utilising her channel sequence.
-    The channel sequence is grouped in groups of 'blovk_size'. Alice generates
+    The channel sequence is grouped in groups of 'block_size'. Alice generates
     a new sequence by flipping or not each group. Every time the key bit is 1, 
     the corresponing group of bits will be flipped. If the key bit is 0, the 
     corresponding group will not be passed on the new sequence unaltered.
@@ -74,8 +74,8 @@ def decrypt(channel_seq_bob, ciphertext, threshold, block_size=3):
      the output of encrypt().Check that the block_size was the same in encrypt()."
     assert type(block_size) == int, \
     "the second argument must be an integer"
-    assert (type(threshold) == int) or (len(threshold) == 2), \
-    "theshold must be an integer or a list of two integers."
+    assert (type(threshold) == int), \
+    "theshold must be an integer."
     
     
     # the length of the key
@@ -92,14 +92,8 @@ def decrypt(channel_seq_bob, ciphertext, threshold, block_size=3):
     # the final key.
     bits2drop = []
     
-    if type(threshold)== int:
-        t1, t2 = threshold, threshold + 1
-    else:
-        t1, t2 = threshold[0], threshold[1]
-        assert type(t1) == int and type(t2) == int, "thresholds must be integers" 
-        assert t2>=t1, "the second threshold cannot be smaller than the first"
-    
-    assert t2 <=block_size, "threshold cannot be larger than the block_size"
+    t1, t2 = threshold, (block_size - threshold)
+
     for i in range(k):
         if hamming_weights[i] <= t1:
             estimate_key[i] = 0
