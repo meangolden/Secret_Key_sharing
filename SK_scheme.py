@@ -17,11 +17,13 @@ from SK_functions import encrypt, decrypt, keyAlice, genCorrSeq
 from genKeys import getSequence
 
 # Constants ###################################################################
-mismatches_dec = 0.1 # write in decimal
-length_corr_sequence =1000
-length_of_key = 100
-block_size = 5
-threshold = 1 # a good threshold is of the form: [n, blocksize - n]
+mismatches_dec = 0.2# write in decimal
+length_corr_sequence =2000
+length_of_key = 300
+block_size = 6
+threshold = 1
+
+
 filename = 'data3_upto5.mat' # dataset, copied from James's repo
 window = 500 # window size
 N = 2 # quantization, nuber of bits e.g. N=2: {00, 01, 10, 11}
@@ -60,7 +62,7 @@ if __name__ == '__main__':
     testMiss(seq_alice, seq_bob)
 
 
-    key_alice= keyAlice(length_of_key) 
+    key_alice = keyAlice(length_of_key) 
     
     #Alice encrypts the key.
     cipher = encrypt(key_alice,seq_alice, block_size)
@@ -80,6 +82,10 @@ if __name__ == '__main__':
     testMiss(key_alice, key_bob, True)
     print('key_alice ', key_alice)
     print('key_bob ', key_bob)
+    print("Drop bits in places:{}".format(bits2drop))
     print("The two keys are symmetrical - {}".format(key_alice == key_bob))
         
-    print(bits2drop)
+    if key_alice != key_bob:
+        number_mismatches = sum([i^j for i,j in zip(key_alice,key_bob)])
+        print("Key Disagreement percentage is {}".format(number_mismatches / len(key_alice)))
+    print("The length of the new key is {}".format(len(key_alice))) 
