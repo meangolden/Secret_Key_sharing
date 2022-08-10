@@ -20,7 +20,8 @@ mismatches_dec = 0.2# write in decimal
 length_corr_sequence =2000
 length_of_key = 300
 block_size = 6
-threshold = 1
+threshold = 1 #the higher the threshold the higher the probability of two 
+# matching keys (but also: more bits will be dropped)
 
 
 # Main ########################################################################
