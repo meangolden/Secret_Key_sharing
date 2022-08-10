@@ -1,3 +1,4 @@
+from asyncio import streams
 import scipy.io
 import sys
 import pandas as pd
@@ -179,12 +180,15 @@ def getSequence(filename, window, N, var_factor, verbose):
     limit = var_factor * (var_alice + var_bob)/2
     df_filtered.plot(title='window' + str(window) + ' limit ' + str(limit))
     step_size = (limit + limit) / (2 ** N)
+    getbinary = lambda x, n: format(x, 'b').zfill(n)
+    plt.plot([0, 100499], [-limit, -limit], label=f'limit, values below are set to {"0"*N}, above is {"0"*N}')
     for multi in range(2 ** N):
-        if multi!=0 or multi != ((2 ** N)-1):
-            plt.plot([0,  100499], [-limit + multi*step_size, -limit + multi*step_size])
+        if int(multi)!=0:
+            print(multi)
+            plt.plot([0,  100499], [-limit + multi*step_size, -limit + multi*step_size],
+            label=f'above is {str(getbinary(multi, N))}')
    
-    plt.plot([0,  100499], [limit, limit], label='limit everything above it is 11')
-    plt.plot([0, 100499], [-limit, -limit], label='limit everything above it is 00')
+    plt.plot([0,  100499], [limit, limit], label=f'limit, values above are set to {"1"*N}')
     plt.legend()
     plt.tight_layout()
     plt.show()
