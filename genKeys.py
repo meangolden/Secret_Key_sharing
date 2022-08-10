@@ -178,6 +178,11 @@ def getSequence(filename, window, N, var_factor, verbose):
     var_bob = df_filtered['filtered bob'].var()
     limit = var_factor * (var_alice + var_bob)/2
     df_filtered.plot(title='window' + str(window) + ' limit ' + str(limit))
+    step_size = (limit + limit) / (2 ** N)
+    for multi in range(2 ** N):
+        if multi!=0 or multi != ((2 ** N)-1):
+            plt.plot([0,  100499], [-limit + multi*step_size, -limit + multi*step_size])
+   
     plt.plot([0,  100499], [limit, limit], label='limit everything above it is 11')
     plt.plot([0, 100499], [-limit, -limit], label='limit everything above it is 00')
     plt.legend()
@@ -188,7 +193,7 @@ def getSequence(filename, window, N, var_factor, verbose):
     # returns quantized sequence
     alice_key = quantizer.uniform(alice_filtered, N, limit, verbose=True)
     bob_key = quantizer.uniform(bob_filtered, N, limit, verbose=True)
-    # writeKey( "aliceKeyB.txt", alice_key )
+    print(len(alice_key))
 
     '''
 
@@ -239,4 +244,4 @@ def getSequence(filename, window, N, var_factor, verbose):
         percentage = numPassed / numSegments
         print(f"passed {numPassed} / {numSegments} = {percentage:.2f}: {testName}")'''
 
-    return aliceKey, bobKey
+    return alice_key, bob_key
