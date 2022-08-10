@@ -13,22 +13,22 @@ Created on Wed Jul 27 14:48:35 2022
 @author: cp17593
 """
 # Libraries ###################################################################
-from SK_functions import encrypt, decrypt, keyAlice, genCorrSeq
+from SK_functions import encrypt, decrypt, keyAlice
 from genKeys import getSequence
 
 # Constants ###################################################################
 mismatches_dec = 0.2# write in decimal
 length_corr_sequence =2000
 length_of_key = 300
-block_size = 6
-threshold = 1 #the higher the threshold the higher the probability of two 
+block_size = 3
+threshold = 2 #the higher the threshold the higher the probability of two 
 # matching keys (but also: more bits will be dropped)
 
 
 filename = 'data3_upto5.mat' # dataset, copied from James's repo
 window = 500 # window size
-N = 2 # quantization, nuber of bits e.g. N=2: {00, 01, 10, 11}
-var_factor = 2 # var_factor * (var of alice + var of bob) / 2
+N = 3 # quantization, nuber of bits e.g. N=2: {00, 01, 10, 11}
+var_factor = 1 # var_factor * (var of alice + var of bob) / 2
                 # controlls the limit for quantization
 verbose = True # if True shows some statistics of the seqeance
 
