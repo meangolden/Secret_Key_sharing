@@ -34,6 +34,8 @@ def uniform( signal, N, limit, midrise=True, verbose=False ):
     #  3   7   111'''
     if(midrise):
         quant_ind, quant_rec = mid_rise( signal, N, limit )
+    else:
+        quant_ind, quant_rec = mid_tread( signal, N, limit )
 
 
 
@@ -48,7 +50,7 @@ def uniform( signal, N, limit, midrise=True, verbose=False ):
         index2bitlist[i - offset] = bitstring
 
     # Debugging# not sure what it does
-    histogram(quant_ind, index2bitlist, verbose=verbose)
+    #histogram(quant_ind, index2bitlist, verbose=verbose)
 
     # Convert to Gray code so only one bit error between adjacent levels
     
@@ -180,4 +182,61 @@ def mid_rise( signal, N, limit ):
         quant_rise_ind.append(k)
         quant_rise_rec.append(value_rec)
     return quant_rise_ind, quant_rise_rec
+
+def mid_tread( signal, N, limit ):
+    """
+    Takes the signal and quantized into 2**N levels within innterval [-limit,+limit).
+    See https://en.wikipedia.org/wiki/Quantization_(signal_processing)
+    See https://www.tutorialspoint.com/digital_communication/digital_communication_quantization.htm
+    Returns two lists, the index values and the quantized signal.
+    :param signal:
+    :param N:
+    :param limit:
+    :return:
+    """
+    max_value = limit
+    min_value = -limit
+    step_size = (max_value - min_value) / (2 ** N)
+
+    #
+    # Ok, we have to get rid of one of the levels
+    # Actual mid-tread will have 2 levels missing
+    # thus leaving one of the mappings vacant.
+    # e.g. N=3 will only have 7 mappings
+    #          we have 9, so just need to get rid of one
+    # We opt to remove one of the mappings
+    # Chose the next to max value interval, merged with max value
+    #
+
+    ################################
+    # Mid-tread Encode/Decode
+    ################################
+    # quant_tread_ind = np.floor(sinewave / stepsize + (1 / 2)) * stepsize
+    quant_tread_ind = list()
+    quant_tread_rec = list()
+    for value in signal:
+        # threshold to stay in limits of index
+        if (value < min_value):
+            value = min_value
+        if (value > max_value - step_size):
+            value = max_value - step_size
+        # k = math.floor(value / stepsize + (1 / 2)) # effectively round
+        k = round(value / step_size)
+        # Create reconstructed quantized value
+        value_rec = k * step_size
+        quant_tread_ind.append(k)
+        quant_tread_rec.append(value_rec)
+    return quant_tread_ind, quant_tread_rec
+
+
+# def dead_zone(signal, N, limit):
+
+#     max_value = limit
+#     min_value = -limit
+#     step_size = (max_value - min_value) / (2 ** N)
+
+#     quant_tread_ind = list()
+#     quant_tread_rec = list()
+#     for value in signal:
+
 
