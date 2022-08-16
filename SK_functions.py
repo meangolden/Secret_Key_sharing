@@ -38,8 +38,8 @@ def encrypt(key_alice,channel_seq_alice, block_size=3):
     '''
     assert isBinary(key_alice) == True , "Key must be binary"
     assert isBinary(channel_seq_alice) == True , "Sequence must be binary"
-    assert len(key_alice)*block_size <= len(channel_seq_alice) , "Channel sequence\
-        is not long enough. Inrease the length of the channel sequence, or reduce\
+    assert len(key_alice)*block_size <= len(channel_seq_alice) , "Channel sequence is \
+        not long enough. Inrease the length of the channel sequence, or reduce\
         the blocksize and/or the keysize."
     assert type(block_size) == int, "Second argument must be an integer"
     
