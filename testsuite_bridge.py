@@ -47,7 +47,7 @@ def getTestFunctions():
     #functions["2.11. Serial Test"] = Serial.serial_test
     
     #Temporary comment out because giving an error to investigate
-    #functions["2.12. Approximate Entropy Test"] = ApproximateEntropy.approximate_entropy_test
+    functions["2.12. Approximate Entropy Test"] = ApproximateEntropy.approximate_entropy_test
 
     functions["2.13. Cumulative Sums (Forward)"] = cumsumForward
     functions["2.13. Cumulative Sums (Backward)"] = cumsumBackward
