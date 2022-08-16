@@ -260,7 +260,7 @@ def bandpassLPHP( rssi_values, alphaLP, alphaHP, verbose=False ):
 
     # Run high-pass filter (get rid of any trends to bounce around zero)
     # overwrite the low-pass results
-    return highpass(filtered_series, alphaHP, verbose)
+    return highpass(filtered_series, alphaHP)
 
 def difference_backwards( rssi_series, params ):
     """
