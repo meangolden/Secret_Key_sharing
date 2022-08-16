@@ -14,7 +14,7 @@ from filters_test import *
 from SK_functions import *
 import multiprocessing 
 import time 
-from testsuite_bridge import entropy, freqTest, randomExcursion, getTestFunctions
+from testsuite_bridge import getTestFunctions
 
 
 class KeyGenFilter():
