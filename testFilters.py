@@ -1,6 +1,7 @@
 from asyncio import streams
 from cmath import log
 from logging import LoggerAdapter
+import queue
 import scipy.io
 import sys
 import pandas as pd
@@ -11,7 +12,9 @@ import quantizer
 from outstream import OutStream
 from filters_test import *
 from SK_functions import *
+import multiprocessing 
 import time 
+from filter_testsuite_bridge import entropy, freqTest, randomExcursion, getTestFunctions
 
 
 class KeyGenFilter():
@@ -37,6 +40,77 @@ class KeyGenFilter():
         return newlist
 
 
+
+    def validate(self, keybits, M ):
+        """
+        First breaks up keybits into shorter segments.  For each segment multiple randomness checks are performed.
+        returns dictionary of test name mapping to tuple of number segments that passed the test, number of segments)
+        """
+        results = dict()
+
+        # Dictionary of tests, as name -> function, avoids long if-else statement
+        # Not certain if all tests return tuple of (float p-value,boolean passed)
+        testFunctions = getTestFunctions()
+
+
+        for functionName in testFunctions:
+            testFunction = testFunctions[functionName]
+            numSegments = 0
+            numPassed = 0
+            i = 0
+            #print( 'total length' )
+            #print( len(keybits) )
+            while( i + M <= len(keybits) ):
+                segment = keybits[i:i+M]
+                # Expected return of (float p-value,boolean passed)
+                # Though not certain this is true for all test functions
+                #print( "SEGMENT" )
+                #print( segment )
+
+                """
+                Sometimes returns more than 2 values, Eve gets this with really bad sequences
+                Can recreate with following (specifically 1 bit quantization)
+                python3 analyze.py ./skyglow/Scenario2-Office-NLoS/data_eave_NLOS.mat 100000 3.0 1 0.5
+                Fails with test <function RunTest.longest_one_block_test at ...>
+                (0.0, False, 'Error: Not enough data to run this test')
+                """
+                
+                returned = testFunction(segment)
+                p_value = returned[0]
+                passed  = returned[1]
+                if( len(returned) > 2 ):
+                    print("TEST")
+                    print(testFunction)
+                    print("SEGMENT")
+                    print(segment)
+                    print("RETURNED")
+                    print(returned)
+                    raise IOError("PROBLEM")
+                    
+                if( passed ):
+                    numPassed = numPassed + 1
+                numSegments = numSegments + 1
+
+                i = i + M
+
+            results[functionName] = (numPassed, numSegments)
+
+        return results
+
+
+    def join(self, elements, delimiter="" ):
+        """
+        Takes list elements and combines to form str with delimiter between elements.
+        Same as str.join but we convert elements (so they don't have to already be str)
+        returns str with str(elements[0]) + delimiter + str(elements[1]) + delimiter ...
+        """
+        s = ""
+        delimit = len(delimiter) > 0
+        for element in elements:
+            s += str(element)
+            if( delimit ): s.append( delimiter )
+        return s
+
     def show_filtered_data(self, alice_filtered, bob_filtered, title, N, var_factor):
 
         df_filtered = pd.DataFrame(alice_filtered, columns=['filtered alice'])
@@ -44,18 +118,21 @@ class KeyGenFilter():
         var_alice = df_filtered['filtered alice'].var()
         var_bob = df_filtered['filtered bob'].var()
         limit = var_factor * (var_alice + var_bob)/2
-        # df_filtered.plot(title=title + str(limit))
+        title = f'{title}{str(limit)}'
+
+        # df_filtered.plot(title=title)
         # step_size = (limit + limit) / (2 ** N)
         # getbinary = lambda x, n: format(x, 'b').zfill(n)
-        # plt.plot([0, 100499], [-limit, -limit], label=f'limit, values below are set to {"0"*N}, above is {"0"*N}')
+        # plt.plot([0, 5000], [-limit, -limit], label=f'limit, values below are set to {"0"*N}, above is {"0"*N}')
         # for multi in range(2 ** N):
         #     if int(multi)!=0:
-        #         plt.plot([0,  100499], [-limit + multi*step_size, -limit + multi*step_size],
+        #         plt.plot([0,  5000], [-limit + multi*step_size, -limit + multi*step_size],
         #         label=f'above is {str(getbinary(multi, N))}')
     
-        # plt.plot([0,  100499], [limit, limit], label=f'limit, values above are set to {"1"*N}')
+        # plt.plot([0,  5000], [limit, limit], label=f'limit, values above are set to {"1"*N}')
         # plt.legend()
         # plt.tight_layout()
+        # plt.savefig(f'plots/{title}.png')
 
         return limit
 
@@ -139,28 +216,54 @@ class KeyGenFilter():
         bob_filtered = nearest_neighbor(rssiBob, params)
 
         title = 'window ' + str(window) + ' limit '
-        limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
-        if limit==0:
- 
+        if window:#'' in [50]:
+            limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
+            if limit==0:
+    
+                return
+
+            alice_key = quantizer.uniform(alice_filtered, N, limit, verbose=False)
+            bob_key = quantizer.uniform(bob_filtered, N, limit, verbose=False)
+        if window in [50, 60]:
+            aliceStr = self.join(alice_key)
+            bobStr = self.join(bob_key)
+
+            print('Alice Results')
+            results = self.validate(aliceStr, 128)
+            for testName in results:
+                numPassed, numSegments = results[testName]
+                percentage = numPassed / numSegments
+                print(f"passed {numPassed} / {numSegments} = {percentage:.2f}: {testName}")
+
+            print('Bob Results')
+            results = self.validate(bobStr, 128)
+            for testName in results:
+                numPassed, numSegments = results[testName]
+                percentage = numPassed / numSegments
+                print(f"passed {numPassed} / {numSegments} = {percentage:.2f}: {testName}")
+
+
+
+            self.checkQuantize(alice_key)
+            self.checkQuantize(bob_key)
+            
+
+            number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
+                KeyProc_mismatched, SeqMismatches, SeqMatches, \
+                    SeqProc_mismatched = self.performkeyGen(
+                    alice_key, bob_key, block_size, length_of_key, threshold)
+
+            self.keydata.loc[len(self.keydata.index)] = [column, window, '    -    ', '    -    ', '    -    ', '    -    ', number_mismatches, 
+                KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+                SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+        else:
             return
 
-        alice_key = quantizer.uniform(alice_filtered, N, limit, verbose=False)
-        bob_key = quantizer.uniform(bob_filtered, N, limit, verbose=False)
 
+        # return [column, window, '    -    ', '    -    ', '    -    ', '    -    ', number_mismatches, 
+        #     KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+        #     SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
 
-        self.checkQuantize(alice_key)
-        self.checkQuantize(bob_key)
-        
-
-        number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
-            KeyProc_mismatched, SeqMismatches, SeqMatches, \
-                SeqProc_mismatched = self.performkeyGen(
-                alice_key, bob_key, block_size, length_of_key, threshold)
-
-
-        self.keydata.loc[len(self.keydata.index)] = [column, window, '    -    ', '    -    ', '    -    ', '    -    ', number_mismatches, 
-            KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
-            SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
 
 
 
@@ -172,31 +275,37 @@ class KeyGenFilter():
         alice_filtered = lowpass_lagged(rssiAlice, params)
         bob_filtered = lowpass_lagged(rssiBob, params)
 
-        title= 'lowpass lagged, lag: ' +str(lag), ' alpha ' + str(alpha) + ' '
-        
-        limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
-        if limit==0:
+        title= 'lowpass lagged, lag: ' +str(lag)+ ' alpha ' + str(alpha) + ' '
+        params = (alpha, lag)
+        if params:# in [(0, 7), (0, 25), (0.2, 2), (0.3, 80), (0.5, 100), (0.8, 20), (0.9, 300)]:
+            limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
+            if limit==0:
 
+                return
+
+
+            alice_key = quantizer.uniform(alice_filtered, N, limit)
+            bob_key = quantizer.uniform(bob_filtered, N, limit)
+
+
+            # self.remove all the unknown bits from the sequences
+            self.checkQuantize(alice_key)
+            self.checkQuantize(bob_key)
+
+
+            number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
+                KeyProc_mismatched, SeqMismatches, SeqMatches, \
+                    SeqProc_mismatched = self.performkeyGen(
+                    alice_key, bob_key, block_size, length_of_key, threshold)
+            self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', alpha, lag, '    -    ', '    -    ', number_mismatches, 
+                KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+                SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+        else:
             return
+        # return [column, '    -    ', alpha, lag, '    -    ', '    -    ', number_mismatches, 
+        #     KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+        #     SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
 
-
-        alice_key = quantizer.uniform(alice_filtered, N, limit)
-        bob_key = quantizer.uniform(bob_filtered, N, limit)
-
-
-        # self.remove all the unknown bits from the sequences
-        self.checkQuantize(alice_key)
-        self.checkQuantize(bob_key)
-
-
-        number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
-            KeyProc_mismatched, SeqMismatches, SeqMatches, \
-                SeqProc_mismatched = self.performkeyGen(
-                alice_key, bob_key, block_size, length_of_key, threshold)
-
-        self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', alpha, lag, '    -    ', '    -    ', number_mismatches, 
-            KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
-            SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
 
 
 
@@ -230,8 +339,14 @@ class KeyGenFilter():
                 alice_key, bob_key, block_size, length_of_key, threshold)
 
         self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', alpha, '    -    ', '    -    ', '    -    ', number_mismatches, 
-            KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
-            SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+        KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+        SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+
+        # return [column, '    -    ', alpha, '    -    ', '    -    ', '    -    ', number_mismatches, 
+        #     KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+        #     SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+
+
 
 
 
@@ -241,29 +356,39 @@ class KeyGenFilter():
         bob_filtered = bandpassHPLP(rssiBob, alphaLP, alphaHP)
 
         title = 'bandpassHPLP - alphaLP: '+str(alphaLP) + ' alphaHP: ' + str(alphaHP) + ' '
-        limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
-        if limit==0:
+        params = (alphaLP, alphaHP)
+        if params:# in [(0.2, 0.9), (0.5, 0.1), (0.7, 0.1)]:
+            limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
+            if limit==0:
 
-            return
+                return
 
-        alice_key = quantizer.uniform(alice_filtered, N, limit)
-        bob_key = quantizer.uniform(bob_filtered, N, limit)
+            alice_key = quantizer.uniform(alice_filtered, N, limit)
+            bob_key = quantizer.uniform(bob_filtered, N, limit)
 
 
-        # self.remove all the unknown bits from the sequences
-        self.checkQuantize(alice_key)
-        self.checkQuantize(bob_key)
+            # self.remove all the unknown bits from the sequences
+            self.checkQuantize(alice_key)
+            self.checkQuantize(bob_key)
 
-        
+            
 
-        number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
-            KeyProc_mismatched, SeqMismatches, SeqMatches, \
-                SeqProc_mismatched = self.performkeyGen(
-                alice_key, bob_key, block_size, length_of_key, threshold)
+            number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
+                KeyProc_mismatched, SeqMismatches, SeqMatches, \
+                    SeqProc_mismatched = self.performkeyGen(
+                    alice_key, bob_key, block_size, length_of_key, threshold)
 
-        self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', '    -    ', '    -    ', alphaLP, alphaHP, number_mismatches, 
+            self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', '    -    ', '    -    ', alphaLP, alphaHP, number_mismatches, 
             KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
             SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+        else:
+            return
+
+        # return [column, '    -    ', '    -    ', '    -    ', alphaLP, alphaHP, number_mismatches, 
+        #     KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+        #     SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+
+
 
     
     def bandpassLPHP_pipe(self, rssiAlice, rssiBob , alphaLP, alphaHP, N, var_factor, column, block_size, length_of_key, threshold):
@@ -272,29 +397,37 @@ class KeyGenFilter():
         bob_filtered = bandpassLPHP(rssiBob, alphaLP, alphaHP)
 
         title = 'bandpassHPLP - alphaLP: '+str(alphaLP) + ' alphaHP: ' + str(alphaHP) + ' '
-        limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
-        if limit==0:
+        params = (alphaLP, alphaHP)
+        if params:# in [(0.2, 0.9), (0.7, 0.2), (0.8, 0.3), (0.9, 0.3)]:
+            limit = self.show_filtered_data(alice_filtered, bob_filtered, title, N, var_factor)
+            if limit==0:
 
-            return
-
-
-        alice_key = quantizer.uniform(alice_filtered, N, limit, verbose=False)
-        bob_key = quantizer.uniform(bob_filtered, N, limit, verbose=False)
+                return
 
 
-        # self.remove all the unknown bits from the sequences
-        self.checkQuantize(alice_key)
-        self.checkQuantize(bob_key)
+            alice_key = quantizer.uniform(alice_filtered, N, limit, verbose=False)
+            bob_key = quantizer.uniform(bob_filtered, N, limit, verbose=False)
 
-    
-        number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
-            KeyProc_mismatched, SeqMismatches, SeqMatches, \
-                SeqProc_mismatched = self.performkeyGen(
-                alice_key, bob_key, block_size, length_of_key, threshold)
 
-        self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', '    -    ', '    -    ', alphaLP, alphaHP, number_mismatches, 
+            # self.remove all the unknown bits from the sequences
+            self.checkQuantize(alice_key)
+            self.checkQuantize(bob_key)
+
+        
+            number_mismatches, KeyLen, KeyStatus, KeyMismatches, KeyMatches, \
+                KeyProc_mismatched, SeqMismatches, SeqMatches, \
+                    SeqProc_mismatched = self.performkeyGen(
+                    alice_key, bob_key, block_size, length_of_key, threshold)
+
+            self.keydata.loc[len(self.keydata.index)] = [column, '    -    ', '    -    ', '    -    ', alphaLP, alphaHP, number_mismatches, 
             KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
             SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+            
+        # return  [column, '    -    ', '    -    ', '    -    ', alphaLP, alphaHP, number_mismatches, 
+        #     KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
+        #     SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+
+
 
 
 
@@ -312,15 +445,25 @@ class RunPipeline():
         self.length_of_key = length_of_key
         self.threshold =threshold
         self.get_file(filename)
+        self.nearest = None
 
+
+    def run_pipeline_multicore(self):
+    
+        nearest = multiprocessing.Process(target=self.run_nearest_neighbor).start()
+        lagged = multiprocessing.Process(target=self.run_lowpass_lagged).start()
+        hplp = multiprocessing.Process(target=self.run_bandpassHPLP).start()
+        lphp = multiprocessing.Process(target=self.run_bandpassLPHP).start()
+
+        return nearest, lagged, hplp, lphp
 
     def run_pipeline(self):
     
         self.run_nearest_neighbor()
-        self.run_lowpass_lagged()
-        self.run_ewma()
-        self.run_bandpassHPLP()
-        self.run_bandpassLPHP()
+        # self.run_lowpass_lagged()
+        # self.run_bandpassHPLP()
+        # self.run_bandpassLPHP()
+
 
 
     def get_file(self, filename):
@@ -337,26 +480,33 @@ class RunPipeline():
             alice.append( rssiPair[0] )
             bob.append(   rssiPair[1] )
             i = i + 1
-        self.rssiAlice = alice[:20000]
-        self.rssiBob = bob[:20000]
+        self.rssiAlice = alice[:5000]
+        self.rssiBob = bob[:5000]
 
 
     def run_nearest_neighbor(self):
-        windows=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000]
+        windows=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000, 4000, ]
+        result = []
         for window in windows:
-            self.KG_filter.nearest_neighbour_pipe(self.rssiAlice, self.rssiBob, window, self.N, self.ver_factor,
-             'nearest neighbour', self.block_size, self.length_of_key, self.threshold)
+            result.append(self.KG_filter.nearest_neighbour_pipe(self.rssiAlice, self.rssiBob, window, self.N, self.ver_factor,
+             'nearest neighbour', self.block_size, self.length_of_key, self.threshold))
+
         print('nearest neighbour finished running')
+        # queue.put(result)
 
     def run_lowpass_lagged(self):
         alphaArray = np.linspace(0, 1, 11)
         lagArray = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300]
-
+        result = []
         for alpha in alphaArray:
             for lag in lagArray:
-                self.KG_filter.lowpass_lagged_pipe(self.rssiAlice, self.rssiBob, lag, alpha, self.N, self.ver_factor,
-                 'lowpass lagged', self.block_size, self.length_of_key, self.threshold)
+                result.append(self.KG_filter.lowpass_lagged_pipe(self.rssiAlice, self.rssiBob, lag, alpha, self.N, self.ver_factor,
+                 'lowpass lagged', self.block_size, self.length_of_key, self.threshold))
+
+
         print('lowpass lagged finished running')
+        # queue.put(result)
+        
 
     def run_ewma(self):
         alphaArray = np.linspace(0, 1, 11)
@@ -365,26 +515,39 @@ class RunPipeline():
              'ewma', self.block_size, self.length_of_key, self.threshold)
         print('ewma finished running')
 
+
     def run_bandpassHPLP(self):
+        result =[]
         alphaArray = np.linspace(0, 1, 11)
         for alphaLP in alphaArray:
             for alphaHP in alphaArray:
-                self.KG_filter.bandpassHPLP_pipe(self.rssiAlice, self.rssiBob, alphaLP, alphaHP, self.N, self.ver_factor,
-                 'bandpassHPLP', self.block_size, self.length_of_key, self.threshold)
+                result.append(self.KG_filter.bandpassHPLP_pipe(self.rssiAlice, self.rssiBob, alphaLP, alphaHP, self.N, self.ver_factor,
+                 'bandpassHPLP', self.block_size, self.length_of_key, self.threshold))
+        # queue.put(result)
         print('bandpassHPLP finished running')
+        
+
 
     def run_bandpassLPHP(self):
         alphaArray = np.linspace(0, 1, 11)
+        result = []
         for alphaLP in alphaArray:
             for alphaHP in alphaArray:
-                self.KG_filter.bandpassHPLP_pipe(self.rssiAlice, self.rssiBob, alphaLP, alphaHP, self.N, self.ver_factor,
-                 'bandpassLPHP', self.block_size, self.length_of_key, self.threshold)
+                result.append(self.KG_filter.bandpassLPHP_pipe(self.rssiAlice, self.rssiBob, alphaLP, alphaHP, self.N, self.ver_factor,
+                'bandpassLPHP', self.block_size, self.length_of_key, self.threshold))
         print('bandpassLPHP finished running')
+        # queue.put(result)
 
 
         
 if __name__ == '__main__':
     '''
+
+    EXAMPLE TO RUN:
+        python3 testFilters.py data3_upto5.mat 2 2 6 300 1 
+
+
+
     inputs:
     filename = the name of the file that contains the data
     var_factor = the mupliplier of variance to set the limit to quantize
@@ -429,71 +592,51 @@ if __name__ == '__main__':
 
     start = time.perf_counter()
     pipeline.run_pipeline()
-    stop = time.perf_counter()
-    print('the time elapsed', stop-start)
+    #nearest, lagged, hplp, lphp = pipeline.run_pipeline_multicore()
+    #print(nearest, lagged, hplp, lphp)
+    # pool = multiprocessing.Pool(processes=4)
+    # result = [pipeline.run_nearest_neighbor, pipeline.run_bandpassHPLP, pipeline.run_bandpassLPHP,pipeline.run_lowpass_lagged]
+    # result_nearest  = pool.map(result, range(4) )
 
-    # calling the populated dataframe
-    dataframe = pipeline.KG_filter.keydata
+    # print('result ', result)
 
-    # writing to csv
-    dataframe.to_csv('filters.csv', sep='\t')
+    # nearest.start()
+    # lagged.start()
+    # hplp.start()
+    # lphp.start()
+    #nearest.join()
+    #lagged.join()
+    #hplp.join()
+    #lphp.join()
 
-    # writing a file to html
-    html = dataframe.to_html()
 
-    #write html to file
-    text_file = open("filters.html", "w")
-    text_file.write(html)
-    text_file.close()
     
 
 
 
 
+    # result = nearest.exitcode + lagged.exitcode + hplp.exitcode + lphp.exitcode
+    # print('result ', nearest.result() )
+    # print('result ', lagged.result())
+    # print('result ', hplp.result())
+    # print('result ', lphp.result())
+    
+    
+    
+    stop = time.perf_counter()
+    print('the time elapsed', stop-start)
+    
 
+    # calling the populated dataframe
+    dataframe = pipeline.KG_filter.keydata
+    # writing to csv
+    dataframe.to_csv(f'filters_var-{var_factor}_N-{N}_bs-{block_size}_kl-{length_of_key}_thr-{threshold}.csv', sep='\t')
 
+    # writing a file to html
+    html = dataframe.to_html()
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    #write html to file
+    text_file = open(f'filters_var-{var_factor}_N-{N}_bs-{block_size}_kl-{length_of_key}_thr-{threshold}', "w")
+    text_file.write(html)
+    text_file.close()
+    
