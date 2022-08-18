@@ -22,7 +22,9 @@ class KeyGenFilter():
     def __init__(self):
         self.keydata = pd.DataFrame(columns=['filter', 'window', 'alpha', 'lag', 'alphaLP', 'alphaHP', 'no mismatchess', 
             'Key Lenght', 'Key Sattus', 'Key bit Mismatches', 'Key bit Matches', 'key bit mismatches %', 
-            'Seq bit Mismatches', 'Seq bit Matches', 'Seq bit mismatches %'])
+            'Seq bit Mismatches', 'Seq bit Matches', 'Seq bit mismatches %', 'alice passed\n Freq test',
+            'alice Block\n Freq test', 'alice Run\n test',  'alice lonf Run\n of ones test', 'alice apprex.\n entropy test',
+            'alice cumulative\n sum forward', 'alice cumulative\n sum backward'])
 
         
 
@@ -227,12 +229,14 @@ class KeyGenFilter():
         if window in [50, 60]:
             aliceStr = self.join(alice_key)
             bobStr = self.join(bob_key)
-
+            alice_test = []
+            print(f'\n\nwindow: {window}')
             print('Alice Results')
             results = self.validate(aliceStr, 128)
             for testName in results:
                 numPassed, numSegments = results[testName]
                 percentage = numPassed / numSegments
+                alice_test.append(f'{numPassed}/{numSegments}: {percentage:.2f}')
                 print(f"passed {numPassed} / {numSegments} = {percentage:.2f}: {testName}")
 
             print('Bob Results')
@@ -252,10 +256,11 @@ class KeyGenFilter():
                 KeyProc_mismatched, SeqMismatches, SeqMatches, \
                     SeqProc_mismatched = self.performkeyGen(
                     alice_key, bob_key, block_size, length_of_key, threshold)
+     
 
             self.keydata.loc[len(self.keydata.index)] = [column, window, '    -    ', '    -    ', '    -    ', '    -    ', number_mismatches, 
                 KeyLen, KeyStatus, KeyMismatches, KeyMatches, round(KeyProc_mismatched, 4), 
-                SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)]
+                SeqMismatches, SeqMatches, round(SeqProc_mismatched, 4)] + alice_test
         else:
             return
 
