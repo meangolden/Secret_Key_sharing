@@ -12,9 +12,9 @@ class KeyStat():
     def __init__(self, alpha, m):
         '''n and tau have to be local'''
         self.alpha=alpha
-        self.n = n
+
         self.m = m
-        self.tau = tau
+
 
 
     def get_prob_keyA_equal_keyB(self, n,  tau):
@@ -61,7 +61,7 @@ class KeyStat():
 
 
     def prob_matching_keys(self, n, tau):
-        ''''''
+        '''gets the probability of matching and mismatching keys'''
 
         matching = self.get_prob_keyA_equal_keyB(n, tau)
         unknown = self.get_prob_keyB_equal_unknown(n, tau)
@@ -75,30 +75,43 @@ class KeyStat():
 
     
     def plot(self, n_list, tau):
-        ''''''
-        match = []
-        mismatch = []
+        '''Very simple plotting method'''
+        probMatch = []
+        probMismatch = []
         for n in n_list:
             pdfMatch, pdfMismatch = self.prob_matching_keys(n, tau)
-            match.append(pdfMatch)
-            mismatch.append(mismatch)
+            probMatch.append(pdfMatch)
+            probMismatch.append(pdfMismatch)
 
-        plt.plot(match, n_list, label='key match prob')
-        plt.plot(mismatch, n_list, label='key mismatch prob')
+        fig = plt.figure()
+        plt.plot(n_list, probMatch, label='key match prob')
+        plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xlabel('Block size length')
         plt.ylabel('Probability')
+        plt.title(f'tau: {tau}')
+        plt.grid()
         plt.legend()
-        plt.show()
+
+
+
+    def getGraphs(self, n_list, tau_list):
+        '''makes plots for various tau's'''
+        for tau in tau_list:
+            self.plot(n_list, tau)
+
+        
 
     
 
 if __name__ == '__main__':
+    '''runs the whole thing, alpha and tau need to be in an array'''
     alpha = 0.1
-    n = [5000, 6000, 1000]
-    m = 10
-    tau = 2
+    n_list = [5, 6, 7, 8, 9, 10]
+    m = 300
+    tau_list = [1, 2, 3]
     stats = KeyStat(alpha, m)
-
+    stats.getGraphs(n_list, tau_list)
+    plt.show()
 
 
 
