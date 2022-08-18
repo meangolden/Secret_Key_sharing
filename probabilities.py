@@ -47,17 +47,17 @@ class KeyStat():
         finish = self.n - self.tau -1
         probSum = 0
         for j in range(start, finish +1):
-            binCoeff = binom(self.n, 128)
+            binCoeff = binom(self.n, j)
             result = binCoeff * ( self.alpha**j ) * ( 1-self.alpha )**(self.n-j)
 
             probSum += result
         return probSum
 
 if __name__ == '__main__':
-    alpha = 0.5
-    n = 5000
+    alpha = 0.2
+    n = 10
     m = 128
-    tau = 2
+    tau = 3
     stats = KeyStat(alpha, n, m, tau)
     print('key alice equal to key bob: ', stats.get_prob_keyA_equal_keyB())
     print('key alice not equal to key bob: ', stats.get_prob_keyA_Notequal_keyB())
