@@ -11,7 +11,7 @@ from scipy.special import binom
 
 class KeyStat():
 
-    def __init__(self, alpha, m=300):
+    def __init__(self, alpha, m=100):
         '''n and tau have to be local'''
         self.alpha=alpha
         self.m = m
@@ -121,10 +121,17 @@ class KeyStat():
             for n in n_list:
                y= self.exp_length(n, tau)
                ys.append(y)
-               
-    def plot_everything(self, n_list, tau_list):
-        self.plot_exp_no_missmathces(n_list, tau_list)
-        self.plot_exp_length(n_list, tau_list)
-        self.plot_exp_no_missmathces(n_list, tau_list)  
-
+             
+            plt.plot(n_list, ys, label=f'tau= {tau}')
+        #plt.plot(n_list, probMismatch, label='key mismatch prob')
+        plt.xlabel('Block size length')
+        plt.ylabel('Expected length of key sequence')
+        plt.title(f'alpha= {self.alpha}, m= {self.m}')
+        plt.grid()
+        plt.legend()
         
+
+    def plot_everything(self, n_list, tau_list):
+        self.plot_exp_length(n_list, tau_list)
+        self.plot_exp_no_missmathces(n_list, tau_list)
+        self.plot_prob_matching_keys(n_list, tau_list)
