@@ -84,12 +84,12 @@ class KeyStat():
                 pdfMatch= self.prob_matching_keys(n, tau)
                 probMatch.append(pdfMatch)
                      
-            plt.plot(n_list, probMatch, '--o', label=f'tau= {tau}')
+            plt.plot(n_list, probMatch, '--o', label = r'$\tau$ = {}'.format(tau))
             #plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xticks(n_list)
         plt.xlabel('Block size length', fontsize=self.fontsize)
         plt.ylabel('Probability of two matching keys', fontsize=self.fontsize)
-        plt.title(f'alpha= {self.alpha}, m= {self.m}', fontsize=self.fontsize)
+        plt.title(r'$\alpha$= {}, m= {}'.format(self.alpha,self.m), fontsize=self.fontsize)
         plt.grid()
         plt.legend(fontsize=self.fontsize)
         
@@ -105,12 +105,12 @@ class KeyStat():
                 y= self.exp_missmatches(n, tau)
                 ys.append(y)
                  
-            plt.plot(n_list, ys, '--o', label=f'tau= {tau}')
+            plt.plot(n_list, ys, '--o', label= r'$\tau$ = {}'.format(tau))
         #plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xticks(n_list)
         plt.xlabel('Block size length', fontsize=self.fontsize)
         plt.ylabel('Expected Number of Missmatches', fontsize=self.fontsize)
-        plt.title(f'alpha= {self.alpha}, m= {self.m}', fontsize=self.fontsize)
+        plt.title(r'$\alpha$= {}, $m$= {}'.format(self.alpha,self.m), fontsize=self.fontsize)
         plt.grid()
         plt.legend(fontsize=self.fontsize)
         
@@ -124,12 +124,12 @@ class KeyStat():
                y= self.exp_length(n, tau)
                ys.append(y)
              
-            plt.plot(n_list, ys, '--o', label=f'tau= {tau}')
+            plt.plot(n_list, ys, '--o', label= r'$\tau$ = {}'.format(tau))
         #plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xticks(n_list)
         plt.xlabel('Block size length', fontsize=self.fontsize)
         plt.ylabel('Expected length of key sequence', fontsize=self.fontsize)
-        plt.title(f'alpha= {self.alpha}, m= {self.m}', fontsize=self.fontsize)
+        plt.title(r'$\alpha=$ {}, $m$= {}'.format(self.alpha,self.m), fontsize=self.fontsize)
         plt.grid()
         plt.legend(fontsize=self.fontsize)
 
@@ -142,9 +142,11 @@ class KeyStat():
 
 if __name__ == '__main__':
     '''runs the whole thing, alpha and tau need to be in an array'''
+    
+    
     alpha = 0.1
-    n_list = [5, 6, 7, 8, 9, 10]
-    m = 300
+    n_list = [7, 8, 9, 10, 11, 12]
+    m = 100
     tau_list = [1, 2, 3]
     stats = KeyStat(alpha, m)
     stats.plot_everything(n_list, tau_list)
