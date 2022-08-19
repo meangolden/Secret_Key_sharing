@@ -6,7 +6,7 @@ Created on Thu Aug 18 21:16:46 2022
 
 import matplotlib.pyplot as plt
 from scipy.special import binom
-
+import matplotlib.font_manager as font_manager
 
 class KeyStat():
 
@@ -15,6 +15,7 @@ class KeyStat():
         self.alpha=alpha
         self.m = m
         self.fontsize=11
+        self.font = font_manager.FontProperties(family='CMU Serif', size=11)
 
 
     def get_prob_same_keybits(self, n,  tau):
@@ -87,11 +88,11 @@ class KeyStat():
             plt.plot(n_list, probMatch, '--o', label = r'$\tau$ = {}'.format(tau))
             #plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xticks(n_list)
-        plt.xlabel('Block size length', fontsize=self.fontsize)
-        plt.ylabel('Probability of two matching keys', fontsize=self.fontsize)
-        plt.title(r'$\alpha$= {}, m= {}'.format(self.alpha,self.m), fontsize=self.fontsize)
+        plt.xlabel('Block size length')
+        plt.ylabel('Probability of two matching keys')
+        plt.title(r'$\alpha$= {}, m= {}'.format(self.alpha,self.m),fontsize=11)
         plt.grid()
-        plt.legend(fontsize=self.fontsize)
+        plt.legend(fontsize=10)
         
         
         
@@ -108,11 +109,11 @@ class KeyStat():
             plt.plot(n_list, ys, '--o', label= r'$\tau$ = {}'.format(tau))
         #plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xticks(n_list)
-        plt.xlabel('Block size length', fontsize=self.fontsize)
-        plt.ylabel('Expected Number of Missmatches', fontsize=self.fontsize)
-        plt.title(r'$\alpha$= {}, $m$= {}'.format(self.alpha,self.m), fontsize=self.fontsize)
+        plt.xlabel('Block size length')
+        plt.ylabel('Expected Number of Missmatches')
+        plt.title(r'$\alpha$= {}, $m$= {}'.format(self.alpha,self.m),fontsize=11)
         plt.grid()
-        plt.legend(fontsize=self.fontsize)
+        plt.legend()
         
     def plot_exp_length(self, n_list, tau_list):
         '''Very simple plotting method'''
@@ -127,11 +128,11 @@ class KeyStat():
             plt.plot(n_list, ys, '--o', label= r'$\tau$ = {}'.format(tau))
         #plt.plot(n_list, probMismatch, label='key mismatch prob')
         plt.xticks(n_list)
-        plt.xlabel('Block size length', fontsize=self.fontsize)
-        plt.ylabel('Expected length of key sequence', fontsize=self.fontsize)
-        plt.title(r'$\alpha=$ {}, $m$= {}'.format(self.alpha,self.m), fontsize=self.fontsize)
+        plt.xlabel('Block size length')
+        plt.ylabel('Expected length of key sequence')
+        plt.title(r'$\alpha=$ {}, $m$= {}'.format(self.alpha,self.m),fontsize=11)
         plt.grid()
-        plt.legend(fontsize=self.fontsize)
+        plt.legend()
 
 
     def plot_everything(self, n_list, tau_list):
@@ -143,6 +144,8 @@ class KeyStat():
 if __name__ == '__main__':
     '''runs the whole thing, alpha and tau need to be in an array'''
     
+    plt.rcParams["font.family"] = 'CMU Sans Serif'  # comment out if problems
+    plt.rcParams['font.size'] = 12
     
     alpha = 0.1
     n_list = [7, 8, 9, 10, 11, 12]
