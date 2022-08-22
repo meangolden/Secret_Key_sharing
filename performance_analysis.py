@@ -7,9 +7,6 @@ Created on Thu Aug 18 21:16:46 2022
 import matplotlib.pyplot as plt
 from scipy.special import binom
 import matplotlib.font_manager as font_manager
-import pandas as pd
-import numpy as np
-
 
 class KeyStat():
 
@@ -17,6 +14,7 @@ class KeyStat():
         '''n and tau have to be local'''
         self.alpha=alpha
         self.m = m
+        self.fontsize=11
         self.font = font_manager.FontProperties(family='CMU Serif', size=11)
 
 
@@ -92,11 +90,14 @@ class KeyStat():
         plt.xticks(n_list)
         plt.xlabel('Block size length')
         plt.ylabel('Probability of two matching keys')
-        #plt.title(r'$\alpha$= {}, m= {}'.format(self.alpha,self.m),fontsize=11)
+        plt.title(r'$\alpha$= {}, m= {}'.format(self.alpha,self.m),fontsize=11)
         plt.grid()
         plt.legend(fontsize=10)
+<<<<<<< HEAD
         plt.savefig(f"plot/matchingKeys_alp{self.alpha}_m{self.m}.pdf", format="pdf", bbox_inches="tight")
         plt.savefig(f"plot/matchingKeys_alp{self.alpha}_m{self.m}.eps", format="eps", bbox_inches='tight')
+=======
+>>>>>>> parent of d2bbb1f (added excel, save figures)
         
         
         
@@ -115,7 +116,7 @@ class KeyStat():
         plt.xticks(n_list)
         plt.xlabel('Block size length')
         plt.ylabel('Expected Number of Missmatches')
-        #plt.title(r'$\alpha$= {}, $m$= {}'.format(self.alpha,self.m),fontsize=11)
+        plt.title(r'$\alpha$= {}, $m$= {}'.format(self.alpha,self.m),fontsize=11)
         plt.grid()
         plt.legend()
         plt.savefig(f"plot/expNoMissmathces_alp{self.alpha}_m{self.m}.pdf", format="pdf", bbox_inches="tight")
@@ -136,7 +137,7 @@ class KeyStat():
         plt.xticks(n_list)
         plt.xlabel('Block size length')
         plt.ylabel('Expected length of key sequence')
-        #plt.title(r'$\alpha=$ {}, $m$= {}'.format(self.alpha,self.m),fontsize=11)
+        plt.title(r'$\alpha=$ {}, $m$= {}'.format(self.alpha,self.m),fontsize=11)
         plt.grid()
         plt.legend()
         plt.savefig(f"plot/expLength_alp{self.alpha}_m{self.m}.pdf", format="pdf", bbox_inches="tight")
@@ -171,3 +172,6 @@ if __name__ == '__main__':
             #stats.createDataframe(n_min, n_max ) # this function reuses parts of plot_everything
             
             plt.show()
+    stats = KeyStat(alpha, m)
+    stats.plot_everything(n_list, tau_list)
+    plt.show()
