@@ -11,8 +11,8 @@ from scipy.special import binom
 import matplotlib.font_manager as font_manager
 import numpy as np
 
-fontsize=11
-font = font_manager.FontProperties(family='CMU Serif', size=11)
+fontsize= 9
+font = font_manager.FontProperties(family='CMU Serif', size=5)
 
 
 def get_prob_same_keybits(blocksize, tau, alpha):
@@ -70,7 +70,7 @@ def exp_length(blocksize, tau, alpha, lenghtOriginalKey):
     expLength= (lenghtOriginalKey)*(1-questionmark)
     return  expLength
 
-def exp_missmatches(blocksize, tau, alpha, lenghtOriginalKey):
+def exp_missmatches(blocksize, tau, lenghtOriginalKey, alpha):
     '''gets the expected number of missmatches'''
     assert tau <= np.ceil(blocksize/2) - 1
     missmatches= (lenghtOriginalKey)*get_prob_diff_keybits(blocksize, tau, alpha)
@@ -132,8 +132,8 @@ if __name__ == '__main__':
     
     #plot parameters
     plt.rcParams["font.family"] = 'CMU Sans Serif'  # comment out if problems
-    plt.rcParams['font.size'] = 12
-    figSize = (8,4)
+    plt.rcParams['font.size'] = 9
+    figSize = (4,2)
     
     
     # plot KDR vs correlation. KDR as a function of the alpha(correlation). Fix tau and blocksize
@@ -198,10 +198,10 @@ if __name__ == '__main__':
  
  #  Third plot
     
-    threshold= 1e-6
-    res = 10
+    threshold= 1e-5
+    #res = 30
     #alphas = np.linspace(0.05,0.49,res)
-    alphas = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]
+    alphas = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45]
     keyTxRates = np.ones(len(alphas)) 
 
     correlations = [correlation(alpha) for alpha in alphas]
@@ -212,21 +212,26 @@ if __name__ == '__main__':
         (minBlocksizes[i], taus[i]) = find_parameters(alphas[i], threshold)
         keyTxRates[i] = tx_key_rate(minBlocksizes[i], taus[i], alphas[i])
 
-    #alphas = correlations
-    plt.plot(alphas, keyTxRates, '--o')
-    plt.xlabel(r'$\alpha$')
-    plt.ylabel('Key Tx Rate')
-    plt.xticks(alphas)
-    plt.title(r'KDR < {}'.format(threshold),fontsize=11)
- #  plt.grid()
- 
-    for i in range(len(alphas)):
+    alphas = correlations
+    plt.plot(correlations, keyTxRates, '--o')
+    plt.xlabel(r'$\rho$',fontsize=9)
+    plt.ylabel('Key Tx Rate',fontsize=9)
+    plt.xticks(alphas, fontsize=8)
+    plt.yticks([0.0,0.05,0.1,0.15,0.2,0.25],fontsize=9)
+    plt.title(r'KDR < {}'.format(threshold),fontsize=9)
+    plt.grid()
+    
+    
+#    plt.text(correlations[len(alphas)-]-0.1, keyTxRates[len(alphas)-]-0.005, str((minBlocksizes[i],taus[i])), fontsize=7)
+    for i in range(0,len(alphas)):
         #s1 = r'$n={}$'.format(minBlocksizes[i])
         #plt.text(alphas[i] + 0.005, keyTxRates[i]+0.025, s1)
         #s2 = r'$\tau = {}$'.format(taus[i])
         #plt.text(alphas[i] + 0.005, keyTxRates[i], s2)
-        plt.text(alphas[i]-0.015, keyTxRates[i]+0.01, str((minBlocksizes[i],taus[i])))
+        plt.text(correlations[i]-0.04, keyTxRates[i]+0.015, str((minBlocksizes[i],taus[i])), fontsize=7)
         
+        plt.savefig("plot/optimal_param_KDR_less_than{}.pdf".format(threshold), format="pdf", bbox_inches="tight")
+        plt.savefig("plot/optimal_param_KDR_less_than{}.eps".format(threshold), format="eps", bbox_inches="tight")
         
     print(minBlocksizes)
     print("--------------")
