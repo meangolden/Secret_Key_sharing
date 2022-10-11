@@ -127,3 +127,28 @@ def genCorrSeq(length, mismatches_dec):
         seq_bob[indx] = int(seq_bob[indx]^1)
 
     return seq_alice, seq_bob
+
+
+def compareKeys(key_alice, bob_estimate):
+    count_uncertain = 0
+    count_correct = 0
+    count_false = 0
+    assert len(key_alice)==len(bob_estimate)
+    for i in range(len(key_alice)):
+        if bob_estimate[i] == 3:
+            count_uncertain +=1              
+        elif key_alice[i] == bob_estimate[i]:
+            count_correct +=1
+        else:
+            count_false +=1
+    return count_correct, count_false, count_uncertain
+
+def KDR_KTR(key_alice, bob_estimate, blocksize):
+    #find the mismatches
+    [ka == kb for ka,kb in zip(key_alice, bob_estimate)]
+
+    count_correct, count_false, count_uncertain = compareKeys(key_alice, bob_estimate)
+    len_of_final_key = len(key_alice) - count_uncertain                  
+    KDR = count_false/len_of_final_key
+    KTR = (len(key_alice) - count_uncertain)/ (len(key_alice) * blocksize)
+    return KDR, KTR   
