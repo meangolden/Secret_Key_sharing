@@ -33,6 +33,7 @@ for i in range(iterations):
     #find the Key Disagreement Rate:
     KDRs[i], KTRs[i]=  KDR_KTR(key_alice, bob_estimate, block_size)
 
+
 #print(np.mean(KDRs))
 print(np.var(KDRs))
 #print(np.mean(KTRs))
