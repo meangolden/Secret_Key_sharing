@@ -86,8 +86,15 @@ class KeyStat():
                            
             plt.plot(n_list, probMatch, label=f'tau= {tau}')
             #plt.plot(n_list, probMismatch, label='key mismatch prob')
-        plt.xlabel('Block size length')
+        plt.xlabel('Blocksize ($n$)')
         plt.ylabel('Probability of two matching keys')
-        plt.title(f'alpha= {self.alpha}, m= {self.m}')
+        plt.title('$p_{ch}$'.format(self.alpha))
         plt.grid()
         plt.legend()
+        
+        
+        
+        
+        
+    plot(0.1,[7,8,9,10,11,12],[0,1,2])    
+    

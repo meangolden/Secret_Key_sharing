@@ -140,16 +140,16 @@ if __name__ == '__main__':
     #plot parameters
     plt.rcParams["font.family"] = 'CMU Sans Serif'  # comment out if problems
     plt.rcParams['font.size'] = 9
-    figSize = (4,2)
+    figSize = (4,3)
     
     
-    thresholds = [1e-2,1e-4, 1e-6, 1e-8]
+    thresholds = [1e-2,1e-3, 1e-4 ,1e-5]
     #thresholds = [1e-4]
-    res = 40
+    res = 30
     alphas = np.linspace(0.0,0.499,res)
 
     
-    plt.figure(figsize = figSize)
+    plt.figure(figsize=figSize)
     
     for threshold in thresholds:
         
@@ -168,7 +168,7 @@ if __name__ == '__main__':
       
         plt.plot(alphas, keyTxRates, label = r'KDR < {}'.format(threshold))
         plt.xlabel(r'$p$ch',fontsize= 9)
-        plt.ylabel('R', fontsize= 9)
+        plt.ylabel('$\mathbb{{E}}(R)$', fontsize= 9)
         plt.xticks(fontsize=8)
         plt.yticks(fontsize=9)
         #plt.title('Achievable rates') 
