@@ -145,7 +145,7 @@ if __name__ == '__main__':
     
     thresholds = [1e-2,1e-3, 1e-4 ,1e-5]
     #thresholds = [1e-4]
-    res = 30
+    res = 
     alphas = np.linspace(0.0,0.499,res)
 
     
