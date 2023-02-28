@@ -1,37 +1,41 @@
-# Secret_Key_sharing
-Created the frist file. This file carries the functions that will be used later on in the main file
-'''
+## Project Title
 
-    EXAMPLE TO RUN:
-        python3 testFilters.py ../data3_upto5.mat 2 2 6 300 1 1
+Filtering Algorithms Comparison
+
+## Description
+
+This program compares results for different sets of parameters across different filtering algorithms:
+
+- NEAREST NEIGHBOURS
+- lowpass lagged
+- EWMA (exponentially weighted moving average, probably doesn't work)
+- bandpassHPLP
+- bandpassLPHP
+
+The program extracts only 20,000 datapoints to speed up the process. The values that are printed are the number of mismatches between Alice and Bob keys, the value is printed out just to see the speed of the program.
+
+## Inputs
+
+The following inputs are required:
+
+- `filename`: the name of the file that contains the data
+- `var_factor`: the multiplier of variance to set the limit to quantize
+- `N`: number of bits to quantize to
+- `block_size`: length of the key stretch
+- `length_of_key`: length of the key
+- `threshold`: 
+
+## Outputs
+
+The program outputs `filters.csv` and `filters.html`, whichever is more convenient.
+
+## Execution
+
+To run the program, execute the following command:
+
+python3 testFilters.py ../data3_upto5.mat 2 2 6 300 1 1
 
 
+## Notes
 
-    inputs:
-    filename = the name of the file that contains the data
-    var_factor = the mupliplier of variance to set the limit to quantize
-    N = number of bits to quantize to
-    block_size = length of the key stretch
-    length_of_key = lenght of the key
-    threshold = 
-
-    outputs:
-    filters.csv and filters.html, whatever is more convenient
-
-    the program compares resustls for different sets of parameters accros different 
-    filtering algorithms: NEAREST NEIGHBOURS, lowpass lagged, 
-    ewma (exponantionaly weighted movinbg average, probably doesn't work), bandpassHPLP,
-    bandpassLPHP.
-    Since there are about 500 iterations no grahs are made
-
-
-    the program extracts only 20'000 datapoints (method get_file; class RunPipeline)
-    to speed up the process
-
-    the values that are printed are the number of mismatches between alice and bob keys, 
-    the value is printed out just to see the speed of the program
-
-
-    ON MY MACHINE THE PROGRAM RUNSS FOR 12 MINUTES  
-    working on spliting the computations to different processor cores
-    '''
+Since there are about 500 iterations, no graphs are made. On my machine, the program runs for 12 minutes. I am working on splitting the computations to different processor cores.
